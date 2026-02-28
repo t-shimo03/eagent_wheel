@@ -118,3 +118,25 @@ To check trained data, access the [release note](https://github.com/r-koike/eage
 Copyright (c) 2022 Ryosuke Koike
 This software is released under the MIT License, see LICENSE.
 ```
+
+
+
+## terrain
+地形を選ぶ場合xml_generaterの235行目にあるここをいじってください
+0~4がrandom
+5~9がperlin
+時間があればConfigのようにオプションで選べるようにしておくのが楽
+
+```python
+# use random
+img_list = [x for x in range(1,5,1)]
+
+#use perlin noise
+# img_list = [x for x in range(5,10,1)]
+  
+#use step
+# img_list = ["step"]
+
+#use plane
+# img_list = ["plane"] 
+```

@@ -2,7 +2,7 @@ import numpy as np
 import copy
 import os
 import json
-
+import torch
 from .tree_selector import TreeSelector
 
 # For `OMP: Error #15: Initializing libiomp5md.dll, but found libiomp5md.dll already initialized.`
@@ -89,6 +89,7 @@ class Trainer():
         self.best_reward_in_current_edges = [-999999] * num_species
         self.reward_stall_streaks = [0] * num_species
         self.prev_edges_selection_generations = [0] * num_species
+        print(self.prev_edges_selection_generations)
         self.eval_reward_list_history = []
         self.pre_eliminated_ids = []
         self.pre_eval_contact_rate = np.array([1.0 for _ in range(cfg["max_num_limbs"] + 1)])
@@ -311,6 +312,8 @@ class Trainer():
                 #     assert cfg["num_species"] > 1
                 eval_reward_list_history = np.array(self.eval_reward_list_history)
                 for i in range(num_species):
+                    print(self.generation)
+                    print(self.prev_edges_selection_generations[i])
                     if self.generation - self.prev_edges_selection_generations[i] < edges_cfg["sight"]:
                         continue
                     f = eval_reward_list_history[-edges_cfg["sight"]:, i]
@@ -319,7 +322,7 @@ class Trainer():
                     print(f"slope_of_{i}: {a}")
                     if a < edges_cfg["slope_threshold"]:
                         eliminated_ids.append(i)
-                    elif (self.generation - self.prev_edges_selection_generations[i]) % cfg["edges_selection_cycle"] == 0:
+                    elif (self.generation - self.prev_edges_selection_generations[i]) >= cfg["edges_selection_cycle"] == 0:
                         # A certain number of generations have passed since the last evolution
                         eliminated_ids.append(i)
                 # * Change the number of rigid bodies

@@ -234,12 +234,49 @@ def main():
             if n % 200 == 0:
                 print(f"{n} / {max_episode}")
 
+    # elif args.type == "record":
+    #     # Create a window to init GLFW.
+    #     GlfwContext(offscreen=True)
+    #     # print(f"camera: {model.env.model._camera_name2id}")
+
+    #     num_steps = cfg["num_steps_in_eval"]
+    #     num_episodes = 1
+    #     size = (640, 480)
+    #     # size = (1280, 960)
+    #     frame_rate = 30
+    #     if cfg_fullname is not None:
+    #         videoname = os.path.basename(os.path.dirname(cfg_fullname))
+    #     else:
+    #         videoname = os.path.basename(cfg['initial_params_filename'])
+    #     j = 0
+    #     while True:
+    #         video_path = f"./log/video/{videoname}_{j}.mp4"
+    #         print(f"path: {video_path}")
+
+    #         scale = size[0] / 640
+    #         fmt = cv2.VideoWriter_fourcc("m", "p", "4", "v")
+    #         writer = cv2.VideoWriter(video_path, fmt, frame_rate, size)
+    #         for i in range(num_episodes):
+    #             obs = model.env.reset()
+    #             for t in range(num_steps + 1):
+    #                 rgb_array = model.env.render(mode="rgb_array", width=size[0], height=size[1])
+    #                 bgr_array = cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR)
+    #                 cv2.putText(bgr_array, f"step: {t}", (int(5 * scale), int(25 * scale)), cv2.FONT_HERSHEY_SIMPLEX,
+    #                             0.8 * scale, (255, 255, 255), thickness=2)
+    #                 # cv2.putText(bgr_array, f"episode: {i+1}, step: {t}", (int(5 * scale), int(25 * scale)), cv2.FONT_HERSHEY_SIMPLEX,
+    #                 #             0.8 * scale, (255, 255, 255), thickness=2)
+    #                 writer.write(bgr_array)
+
+    #                 act = model.get_action(obs)
+    #                 obs, reward, done, info = model.env.step(act)
+    #         print("record done")
+    #         j = j + 1
     elif args.type == "record":
         # Create a window to init GLFW.
         GlfwContext(offscreen=True)
         # print(f"camera: {model.env.model._camera_name2id}")
-
-        num_steps = cfg["num_steps_in_eval"]
+        num_steps = 500
+        # num_steps = cfg["num_steps_in_eval"]
         num_episodes = 1
         size = (640, 480)
         # size = (1280, 960)
@@ -248,26 +285,29 @@ def main():
             videoname = os.path.basename(os.path.dirname(cfg_fullname))
         else:
             videoname = os.path.basename(cfg['initial_params_filename'])
-        video_path = f"./log/video/{videoname}.mp4"
-        print(f"path: {video_path}")
+        j = 0
+        while True:
+            video_path = f"./log/video/{videoname}_{j}.mp4"
+            print(f"path: {video_path}")
 
-        scale = size[0] / 640
-        fmt = cv2.VideoWriter_fourcc("m", "p", "4", "v")
-        writer = cv2.VideoWriter(video_path, fmt, frame_rate, size)
-        for i in range(num_episodes):
-            obs = model.env.reset()
-            for t in range(num_steps + 1):
-                rgb_array = model.env.render(mode="rgb_array", width=size[0], height=size[1])
-                bgr_array = cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR)
-                cv2.putText(bgr_array, f"step: {t}", (int(5 * scale), int(25 * scale)), cv2.FONT_HERSHEY_SIMPLEX,
-                            0.8 * scale, (255, 255, 255), thickness=2)
-                # cv2.putText(bgr_array, f"episode: {i+1}, step: {t}", (int(5 * scale), int(25 * scale)), cv2.FONT_HERSHEY_SIMPLEX,
-                #             0.8 * scale, (255, 255, 255), thickness=2)
-                writer.write(bgr_array)
+            scale = size[0] / 640
+            fmt = cv2.VideoWriter_fourcc("m", "p", "4", "v")
+            writer = cv2.VideoWriter(video_path, fmt, frame_rate, size)
+            for i in range(num_episodes):
+                obs = model.env.reset()
+                for t in range(num_steps + 1):
+                    rgb_array = model.env.render(mode="rgb_array", width=size[0], height=size[1])
+                    bgr_array = cv2.cvtColor(rgb_array, cv2.COLOR_RGB2BGR)
+                    # cv2.putText(bgr_array, f"step: {t}", (int(5 * scale), int(25 * scale)), cv2.FONT_HERSHEY_SIMPLEX,
+                    #             0.8 * scale, (255, 255, 255), thickness=2)
+                    # cv2.putText(bgr_array, f"episode: {i+1}, step: {t}", (int(5 * scale), int(25 * scale)), cv2.FONT_HERSHEY_SIMPLEX,
+                    #             0.8 * scale, (255, 255, 255), thickness=2)
+                    writer.write(bgr_array)
 
-                act = model.get_action(obs)
-                obs, reward, done, info = model.env.step(act)
-        print("record done")
+                    act = model.get_action(obs)
+                    obs, reward, done, info = model.env.step(act)
+            print("record done")
+            j = j + 1
     else:
         raise NotImplementedError
 

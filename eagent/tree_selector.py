@@ -189,7 +189,8 @@ class TreeSelector():
                 new_edges.append([i, j, dof, kind_joint])
 
         return new_edges
-
+    
+    #変更する
     #  As a magic number, return a number less than or equal to -2 where we want some id to be assigned later
     def __compare_trees(self, base_tree, base_current, new_tree, new_current, node_map):
         node_map.update({new_current: base_current})

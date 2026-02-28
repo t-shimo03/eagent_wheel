@@ -1,7 +1,8 @@
 {
-    "initial_params_filename": "zoo/walker/starfish6_48.64_wheel_ma10.json",
-    "max_num_limbs": 10,
+    "initial_params_filename": "zoo/walker/starfish6_48.64_wheel_ma18.json",
+    "max_num_limbs": 18,
     "edges_selection_criteria": "fitting",
+    "use_other_parts": true,
     "do_structure_improvement": true,
     "do_edges_selection": true,
     "num_species": 6,

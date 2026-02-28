@@ -19,6 +19,9 @@ from eagent.config import cfg_dict
 
 from parameter_transformer import Transform
 from link_history import link
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 version = "0.8.8"
 
@@ -256,7 +259,7 @@ class Processor():
                 "current_best_species_id": current_best_species_id,
                 "current_best_individual_id": current_best_individual_id,
                 "num_limbs": [len(x) for x in structure_edges_list],
-                "structure_codes": trainer.tree_codes,
+                "structure_codes": copy.deepcopy(trainer.tree_codes),
                 "current_eval_rewards": current_eval_rewards,
                 "current_mean_rewards": np.mean(rewards_list, axis=1).tolist(),
                 "current_rewards": rewards_list.tolist(),
@@ -406,6 +409,28 @@ def main():
     print(f"status: {mpi_status}, rank: {mpi_rank} (0-{num_follwer})")
     if (mpi_status == "parent"):
         print("Finished training")
+        sender_email = "smmhrs.rinrin@gmail.com"
+        app_password = "hingdcylzfuybpja"  # アプリパスワード（スペース無しでOK）
+        receiver_email = "smmhrs.rinrin@gmail.com"
+
+        # メール内容
+        subject = "Finished training"
+        body = "Finished training"
+
+        # メール作成
+        msg = MIMEMultipart()
+        msg["From"] = sender_email
+        msg["To"] = receiver_email
+        msg["Subject"] = subject
+        msg.attach(MIMEText(body, "plain"))
+
+        # メール送信
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(sender_email, app_password)
+                server.send_message(msg)
+        except Exception as e:
+            print(f"error: {e}")
     elif (mpi_status == "child_leader"):
         Processor(cfg, mpi_rank).leader_process()
     else:

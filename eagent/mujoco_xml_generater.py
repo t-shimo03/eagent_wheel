@@ -61,8 +61,9 @@ class XmlGenerater():
             
             fromto_theta = params_list[current][1] * np.pi * 2.0
             fromto_r = abs(params_list[current][2]) * scale / 0.08
-            fromto_r = max(torso_radius/100, fromto_r)
+            fromto_r = max(torso_radius, fromto_r)
             fromto_r = min(torso_radius * 4,fromto_r)
+            fromto_r = torso_radius * 4
             axis1_phi = params_list[current][3] * np.pi * 2.0
             axis1_theta = params_list[current][4] * np.pi * 2.0
             axis2_phi = params_list[current][5] * np.pi * 2.0
@@ -103,8 +104,8 @@ class XmlGenerater():
             #Coordinate transformation
             fromto = polar_to_cartesian(fromto_phi, fromto_theta, torso_radius / 2)
             #cylinder limit
-            radius_cylinder = max(torso_radius/100, radius_cylinder)
-            radius_cylinder = min(torso_radius, radius_cylinder)
+            radius_cylinder = max(torso_radius / 2, radius_cylinder)
+            radius_cylinder = min(torso_radius * 2, radius_cylinder)
 
             if self.robot_cfg["self_collision"]:
                 conaffinity = 3
@@ -117,20 +118,21 @@ class XmlGenerater():
 
         # # make a marker at the failed joint
         if self.separate_joint[current] == 1:
-            if rigid_id_2_joint_ids[current][0] in failed_joint_ids and self.robot_cfg["failure_type"] == "free":
-                xml_data_list.append(f"""
-{tab}<body pos="{body_pos[0]} {body_pos[1]} {body_pos[2]}" name="body_{rigid_body_name}_failed_joint">
-{tab}   <geom rgba="0 0 1 0.3" conaffinity="0" contype="0" name="geom_{rigid_body_name}_failed_joint" class="robot0:geom" size="0.2" type="sphere" mass ="0"/>
-{tab}</body>
-{tab}<body pos="{body_pos[0]} {body_pos[1]} {body_pos[2]}" name="body_{rigid_body_name}">
-{tab}   <geom rgba="0 0 1 0.8" conaffinity="{conaffinity}" fromto="0.0 0.0 0.0 {fromto[0]} {fromto[1]} {fromto[2]}" name="geom_{rigid_body_name}" class="robot0:geom" size="{scale}" type="capsule"/>""")
-            elif rigid_id_2_joint_ids[current][0] in failed_joint_ids and self.robot_cfg["failure_type"] == "lock":
-                xml_data_list.append(f"""
-{tab}<body pos="{body_pos[0]} {body_pos[1]} {body_pos[2]}" name="body_{rigid_body_name}_failed_joint">
-{tab}   <geom rgba="1 0 0 0.3" conaffinity="0" contype="0" name="geom_{rigid_body_name}_failed_joint" class="robot0:geom" size="0.2" type="sphere" mass ="0"/>
-{tab}</body>
-{tab}<body pos="{body_pos[0]} {body_pos[1]} {body_pos[2]}" name="body_{rigid_body_name}">
-{tab}   <geom rgba="1 0 0 0.8" conaffinity="{conaffinity}" fromto="0.0 0.0 0.0 {fromto[0]} {fromto[1]} {fromto[2]}" name="geom_{rigid_body_name}" class="robot0:geom" size="{scale}" type="capsule"/>""")
+            if self.robot_cfg["failure_occurrence"] == True:
+                if rigid_id_2_joint_ids[current][0] in failed_joint_ids and self.robot_cfg["failure_type"] == "free":
+                    xml_data_list.append(f"""
+    {tab}<body pos="{body_pos[0]} {body_pos[1]} {body_pos[2]}" name="body_{rigid_body_name}_failed_joint">
+    {tab}   <geom rgba="0 0 1 0.3" conaffinity="0" contype="0" name="geom_{rigid_body_name}_failed_joint" class="robot0:geom" size="0.2" type="sphere" mass ="0"/>
+    {tab}</body>
+    {tab}<body pos="{body_pos[0]} {body_pos[1]} {body_pos[2]}" name="body_{rigid_body_name}">
+    {tab}   <geom rgba="0 0 1 0.8" conaffinity="{conaffinity}" fromto="0.0 0.0 0.0 {fromto[0]} {fromto[1]} {fromto[2]}" name="geom_{rigid_body_name}" class="robot0:geom" size="{scale}" type="capsule"/>""")
+                elif rigid_id_2_joint_ids[current][0] in failed_joint_ids and self.robot_cfg["failure_type"] == "lock":
+                    xml_data_list.append(f"""
+    {tab}<body pos="{body_pos[0]} {body_pos[1]} {body_pos[2]}" name="body_{rigid_body_name}_failed_joint">
+    {tab}   <geom rgba="1 0 0 0.3" conaffinity="0" contype="0" name="geom_{rigid_body_name}_failed_joint" class="robot0:geom" size="0.2" type="sphere" mass ="0"/>
+    {tab}</body>
+    {tab}<body pos="{body_pos[0]} {body_pos[1]} {body_pos[2]}" name="body_{rigid_body_name}">
+    {tab}   <geom rgba="1 0 0 0.8" conaffinity="{conaffinity}" fromto="0.0 0.0 0.0 {fromto[0]} {fromto[1]} {fromto[2]}" name="geom_{rigid_body_name}" class="robot0:geom" size="{scale}" type="capsule"/>""")
             else:
                 xml_data_list.append(f"""
 {tab}<body pos="{body_pos[0]} {body_pos[1]} {body_pos[2]}" name="body_{rigid_body_name}">
@@ -138,27 +140,26 @@ class XmlGenerater():
             for i in range(np.round(dof).astype(int)):
                 id = i + 1
                 [r0, r1] = self.robot_cfg["joint_range"]
-
-            # locked failures
-                if rigid_id_2_joint_ids[current][0] in failed_joint_ids and self.robot_cfg["failure_type"] == "lock":
-                    [r0, r1] = [-1e-10, 0]
-
                 [cr0, cr1] = self.robot_cfg["ctrlrange"]
                 [fr0, fr1] = self.robot_cfg["forcerange"]
+                if self.robot_cfg["failure_occurrence"] == True:
+                # locked failures
+                    if rigid_id_2_joint_ids[current][0] in failed_joint_ids and self.robot_cfg["failure_type"] == "lock":
+                        [r0, r1] = [-1e-10, 0]
 
-                if rigid_id_2_joint_ids[current][0] in failed_joint_ids and self.robot_cfg["failure_type"] == "free":
-                    xml_data_list.append(f"""
-{tab}   <joint armature="0" damping="0" axis="{axises[i][0]} {axises[i][1]} {axises[i][2]}" pos="0.0 0.0 0.0" range="{r0} {r1}" type="hinge" name="robot0:joint_{rigid_body_name}_{id}"/>""")
-                    if self.robot_cfg["actuator"] == "motor":
-                        gear = self.robot_cfg["gear"]
-                        self.actuators_xml.append(f"""
-    <motor ctrllimited="true" ctrlFFrange="{cr0} {cr1}" forcerange="{fr0} {fr1}" joint="robot0:joint_{rigid_body_name}_{id}" gear="{gear}"/>""")
-                    elif self.robot_cfg["actuator"] == "position":
-                        kp = self.robot_cfg["kp"]
-                        self.actuators_xml.append(f"""
-    <position ctrllimited="true" ctrlrange="{cr0} {cr1}" forcerange="{fr0} {fr1}" kp="{kp}" joint="robot0:joint_{rigid_body_name}_{id}"/>""")
-                    else:
-                        raise NotImplementedError
+                    if rigid_id_2_joint_ids[current][0] in failed_joint_ids and self.robot_cfg["failure_type"] == "free":
+                        xml_data_list.append(f"""
+    {tab}   <joint armature="0" damping="0.1" axis="{axises[i][0]} {axises[i][1]} {axises[i][2]}" pos="0.0 0.0 0.0" range="{r0} {r1}" type="hinge" name="robot0:joint_{rigid_body_name}_{id}"/>""")
+                        if self.robot_cfg["actuator"] == "motor":
+                            gear = self.robot_cfg["gear"]
+                            self.actuators_xml.append(f"""
+        <motor ctrllimited="true" ctrlFFrange="{cr0} {cr1}" forcerange="{fr0} {fr1}" joint="robot0:joint_{rigid_body_name}_{id}" gear="{gear}"/>""")
+                        elif self.robot_cfg["actuator"] == "position":
+                            kp = self.robot_cfg["kp"]
+                            self.actuators_xml.append(f"""
+        <position ctrllimited="true" ctrlrange="{cr0} {cr1}" forcerange="{fr0} {fr1}" kp="{kp}" joint="robot0:joint_{rigid_body_name}_{id}"/>""")
+                        else:
+                            raise NotImplementedError
                 else:
                     xml_data_list.append(f"""
 {tab}   <joint axis="{axises[i][0]} {axises[i][1]} {axises[i][2]}" pos="0.0 0.0 0.0" range="{r0} {r1}" type="hinge" name="robot0:joint_{rigid_body_name}_{id}"/>""")
@@ -185,7 +186,7 @@ class XmlGenerater():
 
                 
                 xml_data_list.append(f"""
-{tab}       <joint axis="{fromto[0]} {fromto[1]} {fromto[2]}" pos="0.0 0.0 0.0" type="hinge" limited="false" name="robot0:joint_{rigid_body_name}_{id}"/>""")
+{tab}       <joint damping="0.1" axis="{fromto[0]} {fromto[1]} {fromto[2]}" pos="0.0 0.0 0.0" type="hinge" limited="false" name="robot0:joint_{rigid_body_name}_{id}"/>""")
 
                 if self.robot_cfg["actuator"] == "motor":
                     gear = self.robot_cfg["gear"]
@@ -202,7 +203,7 @@ class XmlGenerater():
                 kind_joint, parent, child, fromto, tree, dofs, params_list, depth + 1, failed_joint_ids, rigid_id_2_joint_ids, z_from_torso))
             duplicate = [k for k, v in collections.Counter(flatten_tree).items() if v > 1]
             if len(duplicate) > 0:
-                raise BodyNameError("duplicate name, " + "rigid_body_name:" + duplicate[0])
+                raise BodyNameError("duplicate name, " + "rigid_body_name:" + str(duplicate[0]))
 
         xml_data_list.append(f"""\n{tab}</body>""")
 
@@ -213,7 +214,7 @@ class WalkerXmlGenerater(XmlGenerater):
     def __init__(self, env_cfg=None):
         self.robot_cfg = {
             "actuator": "motor",
-            "torso_radius": 0.01,
+            "torso_radius": 0.16,
             "scale": 0.08,
             "armature": 1,
             "damping": 1,
@@ -223,20 +224,31 @@ class WalkerXmlGenerater(XmlGenerater):
             "gear": 150,
             "self_collision": True,
             "failure_occurrence": False,
-            "failure_type": "free/lock"
+            "failure_type": ""
             }
-        
         
         XmlGenerater.__init__(self, env_cfg)
 
     def generate_xml(self, tree, params, dofs, failed_joint_ids, rigid_id_2_joint_ids, kind_joint, parent):
         torso_radius = self.robot_cfg["torso_radius"]
-        img_list = [x for x in range(10,60,10)]
+        
+        # use random
+        img_list = [x for x in range(1,5,1)]
+
+        #use perlin noise
+        # img_list = [x for x in range(5,10,1)]
+         
+        #use step
+        # img_list = ["step"]
+
+        #use plane
+        # img_list = ["plane"] 
         img_num = random.choice(img_list)
-        if img_num > 50 and img_num <= 150:
-            terrain_scale = torso_radius * 6
+        if img_num >= 0 and img_num < 5:
+            terrain_scale = torso_radius * 4
         else:
             terrain_scale = torso_radius * 15    
+        # terrain_scale = random.choice([3.0, 3.5, 4.0, 4.5, 5.0]) * torso_radius
         img_file = str(img_num)
 
         img_file += ".png"
@@ -244,14 +256,14 @@ class WalkerXmlGenerater(XmlGenerater):
         
 
         #接触判定の最大値を表す数値
-        contact_buffer = 200
+        contact_buffer = 500
 
         xml_data_list = []
         xml_data_list.append(f"""
 <mujoco model="ant">
     <compiler angle="radian" coordinate="local" inertiafromgeom="true"/>
     <option integrator="RK4" timestep="0.01"/>
-    <size nconmax="{contact_buffer}"/>
+    <size njmax="2000" nconmax="{contact_buffer}"/>
     <default>
         <joint armature="{self.robot_cfg["armature"]}" damping="{self.robot_cfg["damping"]}" limited="true" />
         <geom contype="1" conaffinity="1" condim="3" density="5.0" friction="1 0.5 0.5" margin="0.01" rgba="0.8 0.6 0.4 1"/>
@@ -271,7 +283,7 @@ class WalkerXmlGenerater(XmlGenerater):
         <light cutoff="100" diffuse="1 1 1" dir="-0 0 -1.3" directional="true" exponent="1" pos="0 0 1.3" specular=".1 .1 .1"/>
         <!--<geom condim="3" material="MatPlane" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" size="40 40 40" type="plane"/>-->
         <geom conaffinity="1" condim="3" hfield="myterrain" material="MatPlane" name="floor" pos="0 0 0" rgba="0.8 0.9 0.8 1" type="hfield"/>
-        <body name="torso" pos="0 0 3">
+        <body name="torso" pos="0 0 2">
             <camera name="track" mode="trackcom" pos="0 -4 1.5" xyaxes="1 0 0 0 0.5 1"/>
             <geom name="torso_geom" pos="0 0 0" size="{torso_radius}" type="sphere"/>
             <joint armature="0" damping="0" limited="false" margin="0.01" name="root" pos="0 0 0" type="free"/>""")
@@ -300,7 +312,7 @@ class WalkerXmlGenerater(XmlGenerater):
 
 class HandXmlGenerater(XmlGenerater):
     def __init__(self, env_cfg=None):
-        
+
         self.robot_cfg = {
             "actuator": "position",
             "torso_radius": 0.1,
@@ -314,7 +326,7 @@ class HandXmlGenerater(XmlGenerater):
             "hand_position": "below",
             "self_collision": True,
         }
-        XmlGenerater.__init__(self, env_cfg)
+        XmlGenerater.__init__(self)
 
     def generate_xml(self, tree, params, dofs, object_type, failed_joint_ids):
         params_list = np.array(params).reshape([-1, 9]).tolist()
@@ -334,7 +346,7 @@ class HandXmlGenerater(XmlGenerater):
     <option timestep="0.002" iterations="20" apirate="200">
         <flag warmstart="enable"></flag>
     </option>
-    <size njmax="500" nconmax="100" nuser_jnt="1" nuser_site="1" nuser_tendon="1" nuser_sensor="1" nuser_actuator="16" nstack="600000"></size>
+    <size njmax="2000" nconmax="100" nuser_jnt="1" nuser_site="1" nuser_tendon="1" nuser_sensor="1" nuser_actuator="16" nstack="600000"></size>
     <visual>
         <map fogstart="3" fogend="5" force="0.1"></map>
         <quality shadowsize="4096"></quality>
@@ -469,11 +481,11 @@ class WalkerTester():
             [-1, 0, 1, 1],
             [-1, 1, 1, 1],
             [-1, 2, 1, 1],
-            [-1, 3, 1, 1],
-            [0, 4, 1, 1],
-            [1, 5, 1, 1],
-            [2, 6, 1, 2],
-            [3, 7, 1, 1]
+            [0, 3, 1, 1],
+            [3, 4, 1, 2],
+            [1, 5, 1, 2],
+            [2, 6, 1, 1],
+            [2, 7, 1, 1]
         ]
         # edges = [
         #     [-1, 0, 1],
@@ -544,14 +556,25 @@ class WalkerTester():
 
         tree = [[] for i in range(max_num_limbs + 1)]
         dofs = np.array([2] * max_num_limbs)
+        kind_joints = np.array([2] * max_num_limbs)
+        parents = np.array([2] * max_num_limbs)
+        childs = np.array([2] * max_num_limbs)
         for parent, child, dof, kind_joint in edges:
             tree[parent].append(child)
             dofs[child] = dof
-        xml_data = WalkerXmlGenerater().generate_xml(
-            tree,
-            params,
-            dofs,
-            kind_joint
+            kind_joints[child] = kind_joint
+            parents[child] = parent
+            childs[child] = child
+        fail = [10000, 1000000, 20000]
+        wxg = WalkerXmlGenerater()
+        xml_data =wxg.generate_xml(
+                tree,
+                params,
+                dofs,
+                fail,
+                childs,
+                kind_joints,
+                parents
         )
         with open("eagent/mujoco_assets/test.xml", "w") as f:
             f.write(xml_data)
